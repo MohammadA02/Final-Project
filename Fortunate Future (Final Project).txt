@@ -1,0 +1,115 @@
+# YouTube Tutorial Video: https://youtu.be/2S7bGDbj6ug
+
+# Sound effects and music all possible by PyQt5
+
+# Fortunate Future Code:
+
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox, QDesktopWidget
+from PyQt5.uic import loadUi
+from PyQt5.QtCore import QPropertyAnimation, Qt, QRect, QUrl, QFile
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent, QMediaPlaylist
+from PyQt5.QtGui import * 
+import random
+
+def getFortunateFuture(currentText):
+    cookies = []
+    totalLines = 0
+    with open('fortunes_list.txt', 'r', encoding='utf-8') as file:
+        for line in file.readlines():
+            totalLines += 1
+            line = line.strip()
+            cookies.append(line)
+    
+    randomInteger = random.randint(0, totalLines - 1)
+    while cookies[randomInteger] == currentText:
+        randomInteger = random.randint(0, totalLines - 1)
+        
+    return cookies[randomInteger]
+
+class MainWindow(QWidget):
+    def __init__(fortune):
+        super(QWidget, fortune).__init__()  
+        loadUi('gui_main.ui', fortune)
+        fortune.player = QMediaPlayer()
+        fortune.soundPlayer = QMediaPlayer()
+        qtRectangle = fortune.frameGeometry()
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        fortune.move(qtRectangle.topLeft())
+        flags = Qt.WindowFlags(Qt.FramelessWindowHint)
+        fortune.setWindowFlags(flags)
+        fortune.anim = QPropertyAnimation(fortune.welcomeFrame, b"geometry")
+        fortune.mainFrame.hide()
+        fortune.cookieText.setWordWrap(True)
+        print(QFontDatabase.addApplicationFont("zerovelo.ttf"))
+        fortune.minimizeButton.clicked.connect(fortune.showMinimized)
+        fortune.welcomeStartBtn.clicked.connect(fortune.startGame)
+        fortune.generateBtn.clicked.connect(fortune.playGame)
+        fortune.anim.finished.connect(fortune.closeFrame)
+        
+        fortune.playlist = QMediaPlaylist()
+        fortune.playlist.addMedia(QMediaContent(QUrl.fromLocalFile("bg_music.mp3")))
+        fortune.playlist.setPlaybackMode(QMediaPlaylist.Loop)
+        fortune.player.setPlaylist(fortune.playlist)
+        fortune.player.setVolume(1)
+        fortune.player.play()
+        fortune.welcomeGameTitle.setStyleSheet("QLabel{font-family: Zero Velocity BRK; font-size:30px; color: #CD2626;}")
+        fortune.gameTitle.setStyleSheet("QLabel{font-family: Zero Velocity BRK; font-size:40px; color: #CD2626;}")
+        fortune.closeButton.clicked.connect(fortune.close)
+        
+    def closeFrame(fortune):
+        print("closing the program")
+        fortune.welcomeFrame.hide()
+        fortune.mainFrame.show()
+        
+        fortune.soundPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("show_music.wav")))
+        fortune.soundPlayer.setVolume(50)
+        fortune.soundPlayer.play()
+    
+    def startGame(fortune):
+        fortune.soundPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("start_music.wav")))
+        fortune.soundPlayer.setVolume(50)
+        fortune.soundPlayer.play()
+        fortune.anim.setDuration(1000)
+        fortune.anim.setEndValue(QRect(170, -600, 421, 461))
+        print("Animation Happening")
+        fortune.anim.start()
+    
+    def playGame(fortune):
+        fortune.soundPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("next_music.wav")))
+        fortune.soundPlayer.setVolume(60)
+        fortune.soundPlayer.play()
+        fortune.cookieText.setGeometry(10, 5, 521, 221)
+        if fortune.generateBtn.text() == "Generate":
+            fortune.generateBtn.setText("New Fortune")
+        fortune.cookieText.setText(getFortunateFuture(fortune.cookieText.text()))
+        fortune.anim1 = QPropertyAnimation(fortune.cookieText, b"geometry")
+        
+        fortune.anim1.setDuration(300)
+        fortune.anim1.setEndValue(QRect(10, 10, 521, 221))
+        print("Animation Happening")
+        fortune.anim1.start()
+    
+    def closeEvent(fortune, event):
+        
+        fortune.soundPlayer.setMedia(QMediaContent(QUrl.fromLocalFile("quit_music.mp3")))
+        fortune.soundPlayer.setVolume(50)
+        fortune.soundPlayer.play()
+
+        reply = QMessageBox.question(fortune, 'Closing', 'Are you sure you want to close the game?',
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
+app = QApplication(sys.argv)
+widget = MainWindow()
+# widget.setWindowIcon(QIcon('logo_transparant.ico'))
+widget.show()
+try:
+    sys.exit(app.exec_())
+except:
+    print("Error")
