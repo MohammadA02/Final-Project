@@ -1,6 +1,6 @@
 # YouTube Tutorial Video: https://youtu.be/2S7bGDbj6ug
 
-# Sound effects and music all possible by PyQt5
+# Program made using Pyqt5. 
 
 # Fortunate Future Code:
 
